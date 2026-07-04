@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leo's Fraction Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream: #FFF8EC; --board: #F3E3C8; --crust: #D98E4A; --crust-dark: #B96E2F;
+    --topping: #F2846B; --cheese: #F6C453; --sage: #7FB685; --sage-dark: #5B9A62;
+    --plum: #4A3728; --plum-soft: #7A6350; --card: #FFFFFF; --shadow: 0 8px 24px rgba(74,55,40,0.10);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background: var(--cream); font-family:'Nunito', sans-serif; color: var(--plum);
+    min-height:100vh; display:flex; justify-content:center; padding: 24px 16px 60px; }
+  .app{ width:100%; max-width:640px; }
+  h1{ font-family:'Fredoka', sans-serif; font-size: 1.7rem; text-align:center; color: var(--crust-dark); margin: 0 0 4px; }
+  .subtitle{ text-align:center; color: var(--plum-soft); font-weight:700; margin: 0 0 20px; font-size: 0.95rem; }
+
+  .hud{ display:flex; justify-content:space-between; align-items:center; background: var(--card);
+    border-radius: 16px; padding: 10px 16px; margin-bottom:10px; box-shadow: var(--shadow);
+    font-family:'Fredoka', sans-serif; font-size:0.9rem; }
+  .bar-track{ background: var(--board); border-radius:10px; height:10px; margin-bottom:20px; overflow:hidden; }
+  .bar-fill{ background: var(--sage); height:100%; border-radius:10px; transition: width 0.4s ease; width:0%; }
+
+  .mascot-row{ display:flex; align-items:flex-start; gap:14px; margin-bottom: 18px; }
+  .mascot{ flex-shrink:0; width:72px; height:72px; }
+  .bubble{ background: var(--card); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow);
+    flex:1; font-weight:700; font-size: 1.05rem; line-height:1.4; }
+  .bubble .tag{ display:inline-block; background:var(--sage); color:white; font-size:0.7rem; font-weight:800;
+    border-radius:10px; padding:2px 9px; margin-bottom:6px; letter-spacing:0.5px; }
+  .bubble .tag.test{ background: var(--topping); }
+  .bubble .listen-btn{ margin-top:8px; background: var(--sage); color:white; border:none; border-radius:20px;
+    padding:6px 14px; font-weight:800; font-size:0.85rem; cursor:pointer; font-family:'Nunito',sans-serif; }
+  .bubble .listen-btn:active{ background: var(--sage-dark); }
+
+  .stage{ background: var(--board); border-radius: 24px; padding: 24px 16px 20px; box-shadow: var(--shadow);
+    display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .shapes{ display:flex; gap: 22px; justify-content:center; flex-wrap:wrap; }
+  .shape-block{ text-align:center; }
+  .shape-label{ font-family:'Fredoka', sans-serif; margin-top:6px; font-size:0.9rem; color: var(--plum-soft); }
+  svg.figure{ opacity:0; transform: scale(0.94); animation: settle 0.6s ease forwards; }
+  svg.figure.small{ width:110px; height:110px; }
+  svg.figure.large{ width:190px; height:190px; }
+  svg.figure.bar.small{ width:160px; height:70px; }
+  svg.figure.bar.large{ width:280px; height:120px; }
+  @keyframes settle{ to{ opacity:1; transform: scale(1); } }
+  .wedge{ stroke: var(--crust); stroke-width: 3; fill: var(--cream); cursor:pointer; transition: fill 0.35s ease; }
+  .wedge.filled{ fill: var(--topping); }
+  .wedge.locked{ cursor:default; }
+  .shape-clickable{ cursor:pointer; }
+  .crust-ring{ fill:none; stroke: var(--crust-dark); stroke-width:5; }
+  .feedback-shake{ animation: shake 0.35s ease; }
+  @keyframes shake{ 0%,100%{ transform: rotate(0deg); } 30%{ transform: rotate(-2.5deg); } 60%{ transform: rotate(2.5deg); } }
+  .feedback-glow{ animation: glow 0.5s ease; }
+  @keyframes glow{ 0%{ filter: drop-shadow(0 0 0px var(--sage)); } 50%{ filter: drop-shadow(0 0 10px var(--sage)); } 100%{ filter: drop-shadow(0 0 0px var(--sage)); } }
+  .tray{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-width:340px; }
+  .item{ cursor:pointer; padding:4px; border-radius:14px; border: 3px solid transparent;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.15s ease; }
+  .item.selected{ background: #FFE3B8; border-color: var(--cheese); transform: scale(1.08); }
+
+  .controls{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  button.action{ font-family:'Fredoka', sans-serif; font-size: 1.05rem; padding: 12px 22px; border-radius: 16px;
+    border: none; background: var(--crust); color: white; cursor:pointer; box-shadow: 0 4px 0 var(--crust-dark);
+    transition: transform 0.15s ease; min-height:52px; }
+  button.action:active{ transform: translateY(3px); box-shadow: 0 1px 0 var(--crust-dark); }
+  button.action:disabled{ opacity:0.5; }
+  .message{ min-height: 22px; font-weight:800; color: var(--sage-dark); text-align:center; font-size:1rem; }
+  .message.try{ color: var(--topping); }
+  .vocab-box{ background: var(--cheese); border-radius:14px; padding:10px 14px; font-weight:700; font-size:0.92rem; max-width:420px; text-align:center; }
+
+  /* numeral entry */
+  .numeral-panel{ display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:6px; border-top: 2px dashed var(--crust); width:100%; }
+  .numeral-prompt{ font-family:'Fredoka', sans-serif; font-size:1rem; text-align:center; color:var(--plum-soft); }
+  .frac-display{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .frac-box{ width:56px; height:56px; background:white; border:3px solid var(--crust); border-radius:12px;
+    display:flex; align-items:center; justify-content:center; font-family:'Fredoka', sans-serif; font-size:1.8rem;
+    cursor:pointer; color: var(--plum-soft); }
+  .frac-box.active{ border-color: var(--sage-dark); background:#EFFAF0; color: var(--plum); }
+  .frac-line{ width:64px; height:4px; background:var(--crust-dark); border-radius:2px; }
+  .numpad{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:300px; }
+  .numpad button{ width:46px; height:46px; border-radius:10px; border:none; background:var(--card);
+    font-family:'Fredoka', sans-serif; font-size:1.15rem; cursor:pointer; box-shadow: 0 3px 0 var(--crust-dark); color: var(--plum); }
+  .numpad button:active{ transform: translateY(2px); box-shadow:none; }
+
+  .overlay{ position:fixed; inset:0; background: rgba(74,55,40,0.35); display:flex; align-items:center; justify-content:center; padding: 20px; z-index:10; }
+  .overlay-card{ background: var(--card); border-radius: 24px; padding: 32px 24px; text-align:center; max-width: 380px; box-shadow: var(--shadow); }
+  .overlay-card h2{ font-family:'Fredoka', sans-serif; color: var(--crust-dark); margin-top:0; }
+  .overlay-card .trophy{ font-size:3.2rem; margin: 6px 0; }
+  .report-line{ font-weight:800; margin:6px 0; }
+  .hidden{ display:none; }
+  @media (max-width: 420px){ svg.figure.large{ width:150px; height:150px; } svg.figure.bar.large{ width:220px; height:95px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🎡 Leo's Fraction Academy</h1>
+  <p class="subtitle">Learn it, try it, then show what you know!</p>
+
+  <div class="hud hidden" id="hud"><span id="progressLabel">Step 1/23</span><span id="starsLabel">⭐ 0</span></div>
+  <div class="bar-track hidden" id="barTrack"><div class="bar-fill" id="barFill"></div></div>
+
+  <div id="playArea" class="hidden">
+    <div class="mascot-row">
+      <div class="mascot">
+        <svg viewBox="0 0 100 100" width="72" height="72">
+          <circle cx="50" cy="55" r="38" fill="#D98E4A"/>
+          <circle cx="30" cy="25" r="14" fill="#D98E4A"/>
+          <circle cx="70" cy="25" r="14" fill="#D98E4A"/>
+          <circle cx="30" cy="25" r="7" fill="#F2C29B"/>
+          <circle cx="70" cy="25" r="7" fill="#F2C29B"/>
+          <circle cx="38" cy="50" r="5" fill="#4A3728"/>
+          <circle cx="62" cy="50" r="5" fill="#4A3728"/>
+          <ellipse cx="50" cy="65" rx="10" ry="6" fill="#F2C29B"/>
+          <path d="M42 68 Q50 74 58 68" stroke="#4A3728" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="50" cy="30" rx="16" ry="10" fill="#FFF8EC"/>
+        </svg>
+      </div>
+      <div class="bubble">
+        <div id="screenTag"></div>
+        <div id="instructionText">Loading...</div>
+        <div><button class="listen-btn" onclick="speakInstruction()">🔊 Listen</button></div>
+      </div>
+    </div>
+    <div class="stage" id="stage"></div>
+  </div>
+</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="overlay-card">
+    <h2>Welcome, Leo!</h2>
+    <p>Let's learn about fractions together — with wheels, bars, gems, and a few quick quizzes along the way.</p>
+    <button class="action" onclick="startAcademy()">Start Learning</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="reportOverlay">
+  <div class="overlay-card">
+    <div class="trophy" id="trophyEmoji">🏆</div>
+    <h2>Great work, Leo!</h2>
+    <p class="report-line" id="unitScoreLine"></p>
+    <p class="report-line" id="quizScoreLine"></p>
+    <p id="reportMessage"></p>
+    <button class="action" onclick="startAcademy()">Learn Again</button>
+  </div>
+</div>
+
+<script>
+/* ---------- Curriculum: teach -> practice -> test, per unit, then a final mixed quiz ----------
+   Practice and test always use different numerators and alternate shapes (wheel/bar)
+   so the same question never appears twice. */
+const SCREENS = [
+  { kind:'teachEqual' },
+  { kind:'testEqual', id:'unit0' },
+
+  { kind:'teachCut', denom:2, name:'half', plural:'halves', vocab:true, shape:'wheel' },
+  { kind:'practiceMatch', denom:2, numerator:1, label:'1/2', shape:'wheel' },
+  { kind:'testMatch', denom:2, numerator:1, label:'1/2', shape:'bar', id:'unit1' },
+
+  { kind:'teachCut', denom:3, name:'third', plural:'thirds', shape:'bar' },
+  { kind:'practiceMatch', denom:3, numerator:1, label:'1/3', shape:'bar' },
+  { kind:'testMatch', denom:3, numerator:2, label:'2/3', shape:'wheel', id:'unit2' },
+
+  { kind:'teachCut', denom:4, name:'quarter', plural:'quarters', shape:'wheel' },
+  { kind:'practiceMatch', denom:4, numerator:2, label:'2/4', shape:'wheel' },
+  { kind:'testMatch', denom:4, numerator:3, label:'3/4', shape:'bar', id:'unit3' },
+
+  { kind:'teachGroup' },
+  { kind:'practiceGroup', total:6, numerator:2, label:'1/3' },
+  { kind:'testGroup', total:8, numerator:6, label:'3/4', id:'unit4' },
+
+  { kind:'teachCompare' },
+  { kind:'practiceCompare', left:{denominator:2,numerator:1}, right:{denominator:4,numerator:1}, correct:'left' },
+  { kind:'testCompare', left:{denominator:3,numerator:1}, right:{denominator:6,numerator:1}, correct:'left', id:'unit5' },
+
+  { kind:'testMatch', denom:6, numerator:4, label:'4/6', shape:'bar', id:'quiz1', quiz:true },
+  { kind:'testGroup', total:6, numerator:4, label:'2/3', id:'quiz2', quiz:true },
+  { kind:'testCompare', left:{denominator:2,numerator:1}, right:{denominator:8,numerator:1}, correct:'left', id:'quiz3', quiz:true },
+  { kind:'testMatch', denom:8, numerator:5, label:'5/8', shape:'wheel', id:'quiz4', quiz:true },
+  { kind:'testEqual', id:'quiz5', quiz:true, variant:1 }
+];
+
+let screenIndex = 0;
+let stars = 0;
+let usedRetry = false;
+const results = {}; // id -> firstTryCorrect
+
+function polar(cx,cy,r,angleDeg){ const rad=(angleDeg-90)*Math.PI/180; return {x:cx+r*Math.cos(rad), y:cy+r*Math.sin(rad)}; }
+function wedgePath(cx,cy,r,startA,endA){
+  const p1=polar(cx,cy,r,endA), p2=polar(cx,cy,r,startA);
+  const large = (endA-startA) > 180 ? 1 : 0;
+  return `M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 ${large} 0 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z`;
+}
+function makeWheelSVG(n, filledCount, interactive, idPrefix, sizeClass){
+  const cx=110, cy=110, r=100, angle=360/n;
+  let wedges='';
+  for(let i=0;i<n;i++){
+    const filled = i<filledCount ? 'filled':'';
+    const lock = interactive ? '' : 'locked';
+    wedges += `<path class="wedge ${filled} ${lock}" data-i="${i}" d="${wedgePath(cx,cy,r,i*angle,(i+1)*angle)}"></path>`;
+  }
+  return `<svg class="figure ${sizeClass}" id="${idPrefix}" viewBox="0 0 220 220">${wedges}<circle class="crust-ring" cx="${cx}" cy="${cy}" r="${r}"></circle></svg>`;
+}
+function makeIrregularWheelSVG(boundaries, idPrefix, sizeClass){
+  const cx=110, cy=110, r=100;
+  let wedges='';
+  for(let i=0;i<boundaries.length-1;i++){
+    wedges += `<path class="wedge locked" d="${wedgePath(cx,cy,r,boundaries[i],boundaries[i+1])}"></path>`;
+  }
+  return `<svg class="figure ${sizeClass}" id="${idPrefix}" viewBox="0 0 220 220">${wedges}<circle class="crust-ring" cx="${cx}" cy="${cy}" r="${r}"></circle></svg>`;
+}
+function makeBarSVG(n, filledCount, interactive, idPrefix, sizeClass){
+  const segW = 240/n;
+  let segs='';
+  for(let i=0;i<n;i++){
+    const filled = i<filledCount ? 'filled':'';
+    const lock = interactive ? '' : 'locked';
+    segs += `<rect class="wedge ${filled} ${lock}" data-i="${i}" x="${(i*segW).toFixed(2)}" y="10" width="${(segW-2).toFixed(2)}" height="80"></rect>`;
+  }
+  return `<svg class="figure bar ${sizeClass}" id="${idPrefix}" viewBox="0 0 240 100">${segs}<rect x="2" y="10" width="236" height="80" fill="none" stroke="var(--crust-dark)" stroke-width="5" rx="8"></rect></svg>`;
+}
+function makeFigure(shape, n, filledCount, interactive, idPrefix, sizeClass){
+  return shape === 'bar' ? makeBarSVG(n, filledCount, interactive, idPrefix, sizeClass)
+                          : makeWheelSVG(n, filledCount, interactive, idPrefix, sizeClass);
+}
+function attachSegmentHandlers(idPrefix){
+  document.getElementById(idPrefix).querySelectorAll('.wedge').forEach(w=>{
+    w.addEventListener('click', ()=> w.classList.toggle('filled'));
+  });
+}
+function makeGemIcon(id, selected){
+  return `<svg id="${id}" width="44" height="44" viewBox="0 0 44 44">
+    <polygon points="22,4 38,17 30,40 14,40 6,17" fill="${selected ? 'var(--topping)' : 'var(--cream)'}" stroke="var(--crust)" stroke-width="3"/>
+  </svg>`;
+}
+
+function startAcademy(){
+  screenIndex = 0; stars = 0;
+  for(const k in results) delete results[k];
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('reportOverlay').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('barTrack').classList.remove('hidden');
+  document.getElementById('playArea').classList.remove('hidden');
+  loadScreen();
+}
+
+function updateHud(){
+  document.getElementById('progressLabel').textContent = `Step ${screenIndex+1}/${SCREENS.length}`;
+  document.getElementById('starsLabel').textContent = `⭐ ${stars}`;
+  document.getElementById('barFill').style.width = `${(screenIndex/SCREENS.length)*100}%`;
+}
+
+function tagFor(screen){
+  if(screen.kind.startsWith('teach')) return `<span class="tag">LEARN</span>`;
+  if(screen.kind.startsWith('practice')) return `<span class="tag">TRY IT</span>`;
+  if(screen.quiz) return `<span class="tag test">FINAL QUIZ</span>`;
+  return `<span class="tag test">QUICK CHECK</span>`;
+}
+
+function loadScreen(){
+  usedRetry = false;
+  const screen = SCREENS[screenIndex];
+  document.getElementById('screenTag').innerHTML = tagFor(screen);
+  updateHud();
+  renderScreen(screen);
+}
+
+function goNext(){
+  screenIndex++;
+  if(screenIndex >= SCREENS.length){ showReport(); return; }
+  loadScreen();
+}
+
+function markResult(id, correctFirstTry){
+  if(id) results[id] = correctFirstTry;
+}
+
+function finalizeCorrect(screen){
+  if(!usedRetry) stars++;
+  markResult(screen.id, !usedRetry);
+  setTimeout(goNext, 1300);
+}
+
+function showReport(){
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('barTrack').classList.add('hidden');
+  document.getElementById('playArea').classList.add('hidden');
+  const unitIds = ['unit0','unit1','unit2','unit3','unit4','unit5'];
+  const quizIds = ['quiz1','quiz2','quiz3','quiz4','quiz5'];
+  const unitScore = unitIds.filter(id=>results[id]).length;
+  const quizScore = quizIds.filter(id=>results[id]).length;
+  document.getElementById('unitScoreLine').textContent = `Learning Checks: ${unitScore}/${unitIds.length}`;
+  document.getElementById('quizScoreLine').textContent = `Final Quiz: ${quizScore}/${quizIds.length}`;
+  const total = unitScore + quizScore;
+  let trophy = '🥉', msg = "Nice start! A little more practice and you'll have it down.";
+  if(total >= 9){ trophy='🥇'; msg = "Outstanding! You really understand fractions."; }
+  else if(total >= 6){ trophy='🥈'; msg = "Great work! You're getting really confident with fractions."; }
+  document.getElementById('trophyEmoji').textContent = trophy;
+  document.getElementById('reportMessage').textContent = msg;
+  document.getElementById('reportOverlay').classList.remove('hidden');
+}
+
+/* ---------- Numeral entry: appended after a correct visual answer ---------- */
+function renderNumeralStep(container, expectedNum, expectedDen, screen){
+  const panel = document.createElement('div');
+  panel.className = 'numeral-panel';
+  const maxDigit = Math.max(expectedNum, expectedDen, 8);
+  panel.innerHTML = `
+    <div class="numeral-prompt">Now write it as a fraction using the number pad.</div>
+    <div class="frac-display">
+      <div class="frac-box active" id="numBox" data-slot="num">?</div>
+      <div class="frac-line"></div>
+      <div class="frac-box" id="denBox" data-slot="den">?</div>
+    </div>
+    <div class="numpad" id="numpad"></div>
+    <div class="message" id="numMsg"></div>
+    <div class="controls">
+      <button class="action" id="clearNumBtn">Clear</button>
+      <button class="action" id="checkNumBtn">Check</button>
+    </div>`;
+  container.appendChild(panel);
+
+  let padHtml = '';
+  for(let d=1; d<=maxDigit; d++) padHtml += `<button data-d="${d}">${d}</button>`;
+  document.getElementById('numpad').innerHTML = padHtml;
+
+  let activeSlot = 'num';
+  const numBox = document.getElementById('numBox');
+  const denBox = document.getElementById('denBox');
+
+  function setActive(slot){
+    activeSlot = slot;
+    numBox.classList.toggle('active', slot==='num');
+    denBox.classList.toggle('active', slot==='den');
+  }
+  numBox.onclick = ()=> setActive('num');
+  denBox.onclick = ()=> setActive('den');
+
+  document.getElementById('numpad').querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const digit = btn.dataset.d;
+      if(activeSlot === 'num'){ numBox.textContent = digit; setActive('den'); }
+      else { denBox.textContent = digit; }
+    });
+  });
+
+  document.getElementById('clearNumBtn').onclick = ()=>{
+    numBox.textContent = '?'; denBox.textContent = '?'; setActive('num');
+  };
+
+  document.getElementById('checkNumBtn').onclick = ()=>{
+    const msg = document.getElementById('numMsg');
+    if(numBox.textContent === String(expectedNum) && denBox.textContent === String(expectedDen)){
+      msg.className = 'message'; msg.textContent = `Yes! ${expectedNum}/${expectedDen}. ⭐`;
+      finalizeCorrect(screen);
+    } else {
+      usedRetry = true;
+      msg.className = 'message try';
+      msg.textContent = "Check the numbers against your picture above, then try again.";
+      panel.classList.remove('feedback-shake'); void panel.offsetWidth; panel.classList.add('feedback-shake');
+    }
+  };
+}
+
+/* ---------- Screen renderers ---------- */
+function renderScreen(screen){
+  const stage = document.getElementById('stage');
+  const instr = document.getElementById('instructionText');
+
+  if(screen.kind === 'teachEqual'){
+    instr.textContent = "A fraction is what you get when you cut something into EQUAL parts — parts that are all the same size. Look at these two wheels.";
+    stage.innerHTML = `
+      <div class="shapes">
+        <div class="shape-block"><div id="fairHolder"></div><div class="shape-label">Equal parts — fair to share!</div></div>
+        <div class="shape-block"><div id="unfairHolder"></div><div class="shape-label">Unequal parts — not fair!</div></div>
+      </div>
+      <div class="controls"><button class="action" id="nextBtn">Got it!</button></div>`;
+    document.getElementById('fairHolder').innerHTML = makeWheelSVG(4,0,false,'fairSvg','large');
+    document.getElementById('unfairHolder').innerHTML = makeIrregularWheelSVG([0,80,110,300,360],'unfairSvg','large');
+    document.getElementById('nextBtn').onclick = goNext;
+  }
+
+  else if(screen.kind === 'testEqual'){
+    instr.textContent = "Quick check: which wheel is cut into EQUAL parts? Tap it.";
+    stage.innerHTML = `
+      <div class="shapes">
+        <div class="shape-block"><div id="leftHolder" class="shape-clickable"></div></div>
+        <div class="shape-block"><div id="rightHolder" class="shape-clickable"></div></div>
+      </div>
+      <div class="message" id="msg"></div>`;
+    const equalOnLeft = Math.random() < 0.5;
+    const equalBoundaries = [0,90,180,270,360];
+    const unfairBoundaries = screen.variant === 1 ? [0,60,200,260,360] : [0,80,110,300,360];
+    document.getElementById('leftHolder').innerHTML = makeIrregularWheelSVG(equalOnLeft?equalBoundaries:unfairBoundaries,'pLeft','large');
+    document.getElementById('rightHolder').innerHTML = makeIrregularWheelSVG(equalOnLeft?unfairBoundaries:equalBoundaries,'pRight','large');
+    const correctSide = equalOnLeft ? 'left' : 'right';
+    document.getElementById('leftHolder').onclick = ()=>checkEqual('left', correctSide, screen);
+    document.getElementById('rightHolder').onclick = ()=>checkEqual('right', correctSide, screen);
+  }
+
+  else if(screen.kind === 'teachCut'){
+    instr.textContent = `Let's cut a ${screen.shape} into ${screen.denom} equal parts. Tap Cut to see it happen.`;
+    stage.innerHTML = `
+      <div id="figHolder"></div>
+      <div class="message" id="msg"></div>
+      ${screen.vocab ? '<div class="vocab-box" id="vocabBox" style="display:none;">The bottom number says how many equal parts in total. The top number says how many we\'re counting.</div>' : ''}
+      <div class="controls">
+        <button class="action" id="cutBtn">Cut into ${screen.denom}</button>
+        <button class="action" id="nextBtn" disabled>Continue</button>
+      </div>`;
+    document.getElementById('figHolder').innerHTML = makeFigure(screen.shape, 1, 0, false, 'p1', 'large');
+    document.getElementById('cutBtn').onclick = ()=>{
+      document.getElementById('figHolder').innerHTML = makeFigure(screen.shape, screen.denom, 0, false, 'p1', 'large');
+      document.getElementById('msg').textContent = `${screen.denom} equal parts! Each part is called a ${screen.name.toUpperCase()}.`;
+      if(screen.vocab) document.getElementById('vocabBox').style.display = 'block';
+      document.getElementById('cutBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = false;
+    };
+    document.getElementById('nextBtn').onclick = goNext;
+  }
+
+  else if(screen.kind === 'practiceMatch' || screen.kind === 'testMatch'){
+    const prefix = screen.kind === 'testMatch' ? 'Show me: c' : "Let's practice: c";
+    instr.textContent = `${prefix}olor ${screen.numerator} out of ${screen.denom} parts.`;
+    stage.innerHTML = `<div id="figHolder"></div>
+      <div class="message" id="msg"></div>
+      <div class="controls"><button class="action" id="checkBtn">Check</button></div>
+      <div id="numeralHost"></div>`;
+    document.getElementById('figHolder').innerHTML = makeFigure(screen.shape, screen.denom, 0, true, 'p1', 'large');
+    attachSegmentHandlers('p1');
+    document.getElementById('checkBtn').onclick = ()=>{
+      const filled = document.getElementById('p1').querySelectorAll('.wedge.filled').length;
+      const msg = document.getElementById('msg');
+      if(filled === screen.numerator){
+        document.getElementById('p1').classList.add('feedback-glow');
+        msg.className='message'; msg.textContent = `Nicely colored!`;
+        document.getElementById('checkBtn').disabled = true;
+        renderNumeralStep(stage, screen.numerator, screen.denom, screen);
+      } else {
+        usedRetry = true;
+        const svg = document.getElementById('p1');
+        svg.classList.remove('feedback-shake'); void svg.offsetWidth; svg.classList.add('feedback-shake');
+        msg.className='message try';
+        msg.textContent = filled < screen.numerator ? "Color a few more parts." : "That's too many — try fewer.";
+      }
+    };
+  }
+
+  else if(screen.kind === 'teachGroup'){
+    instr.textContent = "Fractions also work with groups of things, not just shapes. Here are 4 gems. Tap Show to see 1/2 of them.";
+    stage.innerHTML = `<div class="tray" id="tray"></div>
+      <div class="message" id="msg"></div>
+      <div class="controls">
+        <button class="action" id="showBtn">Show 1/2</button>
+        <button class="action" id="nextBtn" disabled>Continue</button>
+      </div>`;
+    const tray = document.getElementById('tray');
+    tray.innerHTML = [0,1,2,3].map(i=>`<span class="item" id="item-${i}">${makeGemIcon('gem-'+i,false)}</span>`).join('');
+    document.getElementById('showBtn').onclick = ()=>{
+      document.getElementById('item-0').innerHTML = makeGemIcon('gem-0', true);
+      document.getElementById('item-1').innerHTML = makeGemIcon('gem-1', true);
+      document.getElementById('msg').textContent = "1/2 of 4 gems is 2 gems.";
+      document.getElementById('showBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = false;
+    };
+    document.getElementById('nextBtn').onclick = goNext;
+  }
+
+  else if(screen.kind === 'practiceGroup' || screen.kind === 'testGroup'){
+    instr.textContent = `Tap ${screen.label} of these gems.`;
+    let items = '';
+    for(let i=0;i<screen.total;i++) items += `<span class="item" data-i="${i}">${makeGemIcon('gemitem-'+i,false)}</span>`;
+    stage.innerHTML = `<div class="tray">${items}</div>
+      <div class="message" id="msg"></div>
+      <div class="controls"><button class="action" id="checkBtn">Check</button></div>
+      <div id="numeralHost"></div>`;
+    stage.querySelectorAll('.item').forEach((it,i)=>{
+      it.addEventListener('click', ()=>{
+        const nowSelected = !it.classList.contains('selected');
+        it.classList.toggle('selected');
+        it.innerHTML = makeGemIcon('gemitem-'+i, nowSelected);
+      });
+    });
+    document.getElementById('checkBtn').onclick = ()=>{
+      const selected = stage.querySelectorAll('.item.selected').length;
+      const msg = document.getElementById('msg');
+      if(selected === screen.numerator){
+        msg.className='message'; msg.textContent = `Nice counting!`;
+        document.getElementById('checkBtn').disabled = true;
+        renderNumeralStep(stage, screen.numerator, screen.total, screen);
+      } else {
+        usedRetry = true;
+        msg.className='message try';
+        msg.textContent = selected < screen.numerator ? "Tap a few more gems." : "That's too many — tap fewer.";
+      }
+    };
+  }
+
+  else if(screen.kind === 'teachCompare'){
+    instr.textContent = "Here's something tricky: the MORE parts you cut a wheel into, the SMALLER each part gets.";
+    stage.innerHTML = `
+      <div class="shapes">
+        <div class="shape-block"><div id="bigHolder"></div><div class="shape-label">1/2 — a big part</div></div>
+        <div class="shape-block"><div id="smallHolder"></div><div class="shape-label">1/8 — a small part</div></div>
+      </div>
+      <div class="controls"><button class="action" id="nextBtn">Got it!</button></div>`;
+    document.getElementById('bigHolder').innerHTML = makeWheelSVG(2,1,false,'bigSvg','large');
+    document.getElementById('smallHolder').innerHTML = makeWheelSVG(8,1,false,'smallSvg','large');
+    document.getElementById('nextBtn').onclick = goNext;
+  }
+
+  else if(screen.kind === 'practiceCompare' || screen.kind === 'testCompare'){
+    instr.textContent = "Which PART is bigger? Tap it.";
+    stage.innerHTML = `
+      <div class="shapes">
+        <div class="shape-block"><div id="leftHolder" class="shape-clickable"></div><div class="shape-label">1/${screen.left.denominator}</div></div>
+        <div class="shape-block"><div id="rightHolder" class="shape-clickable"></div><div class="shape-label">1/${screen.right.denominator}</div></div>
+      </div>
+      <div class="message" id="msg"></div>`;
+    document.getElementById('leftHolder').innerHTML = makeWheelSVG(screen.left.denominator, screen.left.numerator, false, 'pLeft', 'large');
+    document.getElementById('rightHolder').innerHTML = makeWheelSVG(screen.right.denominator, screen.right.numerator, false, 'pRight', 'large');
+    document.getElementById('leftHolder').onclick = ()=>checkCompare('left', screen);
+    document.getElementById('rightHolder').onclick = ()=>checkCompare('right', screen);
+  }
+}
+
+function checkEqual(choice, correctSide, screen){
+  const msg = document.getElementById('msg');
+  const chosenSvg = document.getElementById(choice==='left'?'pLeft':'pRight');
+  if(choice === correctSide){
+    chosenSvg.classList.add('feedback-glow');
+    msg.className='message'; msg.textContent = "Yes! Equal parts, fair to share. ⭐";
+    finalizeCorrect(screen);
+  } else {
+    usedRetry = true;
+    chosenSvg.classList.remove('feedback-shake'); void chosenSvg.offsetWidth; chosenSvg.classList.add('feedback-shake');
+    msg.className='message try';
+    msg.textContent = "Look closely — are the parts really the same size?";
+  }
+}
+
+function checkCompare(choice, screen){
+  const msg = document.getElementById('msg');
+  const leftSvg = document.getElementById('pLeft');
+  const rightSvg = document.getElementById('pRight');
+  if(choice === screen.correct){
+    (choice==='left'?leftSvg:rightSvg).classList.add('feedback-glow');
+    msg.className='message'; msg.textContent = "Yes, well spotted! ⭐";
+    finalizeCorrect(screen);
+  } else {
+    usedRetry = true;
+    const wrongSvg = choice==='left'?leftSvg:rightSvg;
+    wrongSvg.classList.remove('feedback-shake'); void wrongSvg.offsetWidth; wrongSvg.classList.add('feedback-shake');
+    msg.className='message try';
+    msg.textContent = "Look again — try the other wheel.";
+  }
+}
+
+function speakInstruction(){
+  if(!window.speechSynthesis) return;
+  const utter = new SpeechSynthesisUtterance(document.getElementById('instructionText').textContent);
+  utter.rate = 0.9;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+</script>
+</body>
+</html>
